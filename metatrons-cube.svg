@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="400" cy="400" r="390" fill="#111" stroke="#333" stroke-width="2"/>
+  
+  <!-- Metatron's Cube Pattern -->
+  <g stroke="#777" stroke-width="1.5" fill="none">
+    <!-- Outer hexagon -->
+    <polygon points="400,100 650,250 650,550 400,700 150,550 150,250" />
+    
+    <!-- Inner hexagon -->
+    <polygon points="400,200 566.67,300 566.67,500 400,600 233.33,500 233.33,300" />
+    
+    <!-- Star of David -->
+    <polygon points="400,100 650,550 150,550" />
+    <polygon points="400,700 150,250 650,250" />
+    
+    <!-- Connect centers of triangles -->
+    <line x1="400" y1="100" x2="400" y2="700" />
+    <line x1="150" y1="250" x2="650" y2="550" />
+    <line x1="150" y1="550" x2="650" y2="250" />
+    
+    <!-- Inner circles -->
+    <circle cx="400" cy="400" r="300" />
+    <circle cx="400" cy="400" r="250" />
+    <circle cx="400" cy="400" r="200" />
+    <circle cx="400" cy="400" r="150" />
+    <circle cx="400" cy="400" r="100" />
+    <circle cx="400" cy="400" r="50" />
+    
+    <!-- Connecting points -->
+    <circle cx="400" cy="100" r="5" fill="#aaa" />
+    <circle cx="650" cy="250" r="5" fill="#aaa" />
+    <circle cx="650" cy="550" r="5" fill="#aaa" />
+    <circle cx="400" cy="700" r="5" fill="#aaa" />
+    <circle cx="150" cy="550" r="5" fill="#aaa" />
+    <circle cx="150" cy="250" r="5" fill="#aaa" />
+    
+    <circle cx="400" cy="200" r="3" fill="#aaa" />
+    <circle cx="566.67" cy="300" r="3" fill="#aaa" />
+    <circle cx="566.67" cy="500" r="3" fill="#aaa" />
+    <circle cx="400" cy="600" r="3" fill="#aaa" />
+    <circle cx="233.33" cy="500" r="3" fill="#aaa" />
+    <circle cx="233.33" cy="300" r="3" fill="#aaa" />
+    
+    <circle cx="400" cy="400" r="7" fill="#ddd" />
+  </g>
+</svg> 
