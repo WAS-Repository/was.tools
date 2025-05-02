@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WAS Tools Documentation</title>
+  <style>
+    /* Sacred terminal inspired styling */
+    :root {
+      --background: #000000;
+      --foreground: #ffffff;
+      --secondary: #757575;
+      --accent: #aaaaaa;
+      --spacing: 16px;
+      --radius: 2px;
+      --dark-border: 1px solid #333;
+      --font-mono: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    html, body {
+      background: var(--background);
+      color: var(--foreground);
+      font-family: var(--font-mono);
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+      font-size: 16px;
+    }
+    
+    a {
+      color: var(--foreground);
+      text-decoration: none;
+      border-bottom: 1px solid var(--foreground);
+      transition: opacity 0.2s ease;
+    }
+
+    a:hover {
+      opacity: 0.7;
+      text-decoration: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: var(--spacing);
+    }
+
+    .header {
+      padding: calc(var(--spacing) * 2) 0;
+      border-bottom: var(--dark-border);
+      margin-bottom: calc(var(--spacing) * 2);
+      text-align: center;
+    }
+    
+    .header h1 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      font-weight: normal;
+      letter-spacing: 1px;
+    }
+    
+    .nav {
+      display: flex;
+      justify-content: center;
+      padding: calc(var(--spacing)) 0;
+      border-bottom: var(--dark-border);
+    }
+    
+    .nav ul {
+      display: flex;
+      list-style: none;
+    }
+    
+    .nav li {
+      margin: 0 var(--spacing);
+    }
+    
+    .nav a {
+      color: var(--foreground);
+      border-bottom: none;
+    }
+    
+    .nav a:hover {
+      opacity: 0.7;
+    }
+    
+    .content {
+      display: flex;
+      padding: var(--spacing) 0;
+    }
+    
+    .sidebar {
+      width: 25%;
+      padding-right: calc(var(--spacing) * 2);
+    }
+    
+    .sidebar h3 {
+      font-size: 1rem;
+      margin-bottom: calc(var(--spacing));
+      padding-bottom: calc(var(--spacing) / 2);
+      border-bottom: var(--dark-border);
+      font-weight: normal;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+    
+    .sidebar ul {
+      list-style: none;
+      margin-bottom: calc(var(--spacing) * 2);
+    }
+    
+    .sidebar li {
+      margin-bottom: calc(var(--spacing) / 2);
+    }
+    
+    .sidebar a {
+      border-bottom: none;
+      font-size: 0.9rem;
+    }
+    
+    .main-content {
+      width: 75%;
+    }
+    
+    .section {
+      margin-bottom: calc(var(--spacing) * 2.5);
+    }
+    
+    .section h2 {
+      font-size: 1.1rem;
+      margin-bottom: calc(var(--spacing));
+      padding-bottom: calc(var(--spacing) / 2);
+      border-bottom: var(--dark-border);
+      font-weight: normal;
+    }
+    
+    .section h3 {
+      font-size: 1rem;
+      margin: calc(var(--spacing)) 0;
+      font-weight: normal;
+      color: var(--accent);
+    }
+    
+    .section p {
+      margin-bottom: var(--spacing);
+      font-size: 0.9rem;
+      color: var(--secondary);
+    }
+    
+    code {
+      font-family: var(--font-mono);
+      background-color: #111111;
+      padding: 2px 4px;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+    }
+    
+    pre {
+      font-family: var(--font-mono);
+      background-color: #111111;
+      padding: var(--spacing);
+      border-radius: var(--radius);
+      overflow-x: auto;
+      margin-bottom: var(--spacing);
+      font-size: 0.85rem;
+      border: var(--dark-border);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: calc(var(--spacing) * 1.5);
+      font-size: 0.85rem;
+    }
+    
+    table th, table td {
+      border: var(--dark-border);
+      padding: calc(var(--spacing) / 2) var(--spacing);
+      text-align: left;
+    }
+    
+    table th {
+      background-color: #111111;
+    }
+    
+    table tr:nth-child(even) {
+      background-color: #0a0a0a;
+    }
+
+    /* Preserve list styling */
+    ul, ol {
+      padding-left: calc(var(--spacing) * 1.5);
+      margin-bottom: var(--spacing);
+      color: var(--secondary);
+      font-size: 0.9rem;
+    }
+
+    li {
+      margin-bottom: calc(var(--spacing) / 3);
+    }
+
+    strong {
+      color: var(--foreground);
+      font-weight: normal;
+    }
+    
+    .example-block {
+      background-color: #111111;
+      border: var(--dark-border);
+      border-radius: var(--radius);
+      padding: var(--spacing);
+      margin-bottom: calc(var(--spacing) * 1.5);
+      font-size: 0.85rem;
+    }
+    
+    .example-block h4 {
+      margin-top: 0;
+      margin-bottom: calc(var(--spacing));
+      color: var(--accent);
+      font-weight: normal;
+      font-size: 0.9rem;
+    }
+    
+    .example-block code {
+      display: block;
+      background: transparent;
+      line-height: 1.5;
+      padding: 0;
+    }
+    
+    .example-block p {
+      margin-top: var(--spacing);
+      margin-bottom: calc(var(--spacing) / 2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>DOCUMENTATION</h1>
+    </div>
+    
+    <div class="nav">
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#search">Search API</a></li>
+        <li><a href="#graphql">GraphQL</a></li>
+        <li><a href="#studio">Studio</a></li>
+      </ul>
+    </div>
+    
+    <div class="content">
+      <div class="sidebar">
+        <h3>WAS Tools</h3>
+        <ul>
+          <li><a href="#overview">Tools Overview</a></li>
+          <li><a href="#search">Search API</a></li>
+          <li><a href="#graphql">GraphQL API</a></li>
+          <li><a href="#studio">Studio Frontend</a></li>
+          <li><a href="#endpoints">Key Endpoints</a></li>
+          <li><a href="#distribution">Cross-Platform Distribution</a></li>
+        </ul>
+        
+        <h3>Related Domains</h3>
+        <ul>
+          <li><a href="/foundation">was.foundation</a></li>
+          <li><a href="/network">was.network</a></li>
+          <li><a href="/ngo">was.ngo.ong</a></li>
+        </ul>
+      </div>
+      
+      <div class="main-content">
+        <div class="section" id="overview">
+          <h2>WAS Tools – Public APIs & Frontend</h2>
+          <p>The was.tools domain hosts the public-facing APIs and frontend interfaces for interacting with the World Archive System. This domain provides developers and users with powerful tools to search, access, and work with archived content.</p>
+          
+          <h3>Purpose</h3>
+          <p>was.tools serves as the primary technical interface for developers and end-users who want to programmatically access or explore the World Archive System's content. It provides a comprehensive set of APIs, search capabilities, and a feature-rich frontend studio.</p>
+        </div>
+        
+        <div class="section" id="search">
+          <h2>Search API</h2>
+          <p>The Search API provides powerful capabilities for finding content within the World Archive System:</p>
+          
+          <h3>Search Components</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Technology</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Token Index</td>
+                <td>Typesense</td>
+                <td>Fast keyword-based search with BM25 ranking</td>
+              </tr>
+              <tr>
+                <td>Vector Index</td>
+                <td>FAISS</td>
+                <td>Semantic search using dense vector embeddings</td>
+              </tr>
+              <tr>
+                <td>Graph DB</td>
+                <td>Neo4j/Neptune</td>
+                <td>Relationship-based search and traversal</td>
+              </tr>
+              <tr>
+                <td>Search Gateway</td>
+                <td>Cloudflare Worker</td>
+                <td>API entry point with query parsing and routing</td>
+              </tr>
+              <tr>
+                <td>Reranker</td>
+                <td>Cross-encoder model</td>
+                <td>Advanced result ranking for improved relevance</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <h3>REST Endpoint</h3>
+          <p>The search API is accessible via a REST endpoint at <code>search.was.tools</code>:</p>
+          
+          <div class="example-block">
+            <h4>Example: Basic Search Query</h4>
+            <p>Request:</p>
+            <code>
+              GET https://search.was.tools/search?q=quantum+computing&limit=10
+            </code>
+            
+            <p>Response:</p>
+            <pre>
+{
+  "results": [
+    {
+      "id": "bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi",
+      "title": "Introduction to Quantum Computing",
+      "content_type": "text/html",
+      "score": 0.89,
+      "highlight": "...principles of <em>quantum computing</em> are based on...",
+      "url": "https://browse.was.ngo/bafybeigdyrzt5sfp7udm7hu76uh7y26nf3efuylqabf3oclgtqy55fbzdi"
+    },
+    // Additional results...
+  ],
+  "total": 427,
+  "took_ms": 122
+}
+            </pre>
+          </div>
+          
+          <h3>Search Features</h3>
+          <ul>
+            <li><strong>Hybrid Search:</strong> Combines BM25 keyword search with vector semantic search</li>
+            <li><strong>Result Fusion:</strong> Uses Reciprocal Rank Fusion (RRF) to combine results</li>
+            <li><strong>Graph Expansion:</strong> Optional related document discovery</li>
+            <li><strong>Faceted Search:</strong> Filter by content type, date, language, etc.</li>
+          </ul>
+        </div>
+        
+        <div class="section" id="graphql">
+          <h2>GraphQL API</h2>
+          <p>The GraphQL API provides a flexible interface for querying and exploring the relationships between archived content:</p>
+          
+          <h3>Endpoint</h3>
+          <p>The GraphQL API is available at <code>api.was.tools/graphql</code>:</p>
+          
+          <div class="example-block">
+            <h4>Example: GraphQL Query</h4>
+            <pre>
+query {
+  search(query: "climate change", limit: 5) {
+    results {
+      id
+      title
+      contentType
+      createdAt
+      authors {
+        name
+      }
+      relatedDocuments(limit: 3) {
+        id
+        title
+        relationshipType
+      }
+    }
+    facets {
+      contentType {
+        value
+        count
+      }
+    }
+    total
+  }
+}
+            </pre>
+          </div>
+          
+          <h3>GraphQL Schema</h3>
+          <p>The GraphQL schema provides access to various types of data and relationships:</p>
+          <ul>
+            <li><strong>Documents:</strong> Core content objects with metadata</li>
+            <li><strong>Authors:</strong> Content creators and contributors</li>
+            <li><strong>Collections:</strong> Curated groups of related documents</li>
+            <li><strong>Relationships:</strong> Connections between content items</li>
+            <li><strong>Search:</strong> Full-featured search capabilities</li>
+          </ul>
+        </div>
+        
+        <div class="section" id="studio">
+          <h2>WAS Studio Frontend</h2>
+          <p>The WAS Studio provides a comprehensive browser-based workbench for exploring and interacting with archived content:</p>
+          
+          <h3>Technology Stack</h3>
+          <ul>
+            <li><strong>Frontend:</strong> Vite + React + TypeScript</li>
+            <li><strong>Editor:</strong> Monaco Editor core</li>
+            <li><strong>Components:</strong> USWDS for accessibility (WCAG 2.1 AA compliant)</li>
+            <li><strong>Collaboration:</strong> Yjs for real-time collaboration</li>
+          </ul>
+          
+          <h3>Key Features</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>Description</th>
+                <th>Availability</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Document Viewer</td>
+                <td>View and explore archived documents with metadata pane</td>
+                <td>Phase 2</td>
+              </tr>
+              <tr>
+                <td>Contributor Upload</td>
+                <td>Panel for contributing new content with PR workflow</td>
+                <td>Phase 3</td>
+              </tr>
+              <tr>
+                <td>Search Interface</td>
+                <td>Advanced search UI with filters and facets</td>
+                <td>Phase 4</td>
+              </tr>
+              <tr>
+                <td>Graph Visualization</td>
+                <td>Interactive visualization of document relationships</td>
+                <td>Phase 4</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <h3>Accessibility & Internationalization</h3>
+          <ul>
+            <li>WCAG 2.1 AA compliance via USWDS components</li>
+            <li>Axe-core testing in CI pipeline (minimum score: 90)</li>
+            <li>Automatic language detection and UI locale switching</li>
+            <li>Support for right-to-left languages</li>
+          </ul>
+        </div>
+        
+        <div class="section" id="endpoints">
+          <h2>Key Endpoints</h2>
+          <p>The was.tools domain provides several important endpoints:</p>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Endpoint</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>api.was.tools/graphql</code></td>
+                <td>GraphQL API endpoint</td>
+              </tr>
+              <tr>
+                <td><code>search.was.tools</code></td>
+                <td>REST search API</td>
+              </tr>
+              <tr>
+                <td><code>studio.was.tools</code></td>
+                <td>Single-page app for WAS Studio</td>
+              </tr>
+              <tr>
+                <td><code>cdn.was.tools</code></td>
+                <td>Asset CDN (R2 backend)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="section" id="distribution">
+          <h2>Cross-Platform Distribution</h2>
+          <p>The WAS Studio is available across multiple platforms:</p>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Platform</th>
+                <th>Distribution Method</th>
+                <th>Technology</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Web (PWA)</td>
+                <td>Progressive Web App with offline support</td>
+                <td>Web App Manifest + Service Worker</td>
+              </tr>
+              <tr>
+                <td>Windows / macOS / Linux</td>
+                <td>Native desktop application</td>
+                <td>Tauri (Rust wrapper)</td>
+              </tr>
+              <tr>
+                <td>Android</td>
+                <td>Native mobile app</td>
+                <td>Capacitor bridge with WebView</td>
+              </tr>
+              <tr>
+                <td>iOS</td>
+                <td>Native mobile app</td>
+                <td>Capacitor bridge</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <h3>App Distribution Channels</h3>
+          <ul>
+            <li><strong>Desktop:</strong> GitHub Releases, Winget, Snapcraft</li>
+            <li><strong>Android:</strong> Google Play Store</li>
+            <li><strong>iOS:</strong> App Store</li>
+            <li><strong>Web:</strong> Direct install via PWA</li>
+          </ul>
+          
+          <p>All distributions are code-signed and follow platform-specific security and compliance guidelines.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html> 
