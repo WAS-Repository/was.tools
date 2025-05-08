@@ -1,0 +1,15 @@
+/* Root CSS Variables */
+:root {
+  /* Base colors */
+  --color_r: 0;
+  --color_g: 255;
+  --color_b: 0;
+
+  /* Theme colors */
+  --color_light_black: #111;
+  --color_black: #000;
+  
+  /* Fonts */
+  --font_main: 'Ubuntu Mono', 'Courier New', Courier, monospace;
+  --font_main_light: 300;
+} 

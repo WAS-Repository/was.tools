@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hampton Roads Development Tracker</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin="" />
+    
+    <!-- Shadcn UI dependencies -->
+    <link href="https://cdn.jsdelivr.net/npm/@radix-ui/colors/blackA.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@radix-ui/colors/mauve.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@radix-ui/colors/violet.css" rel="stylesheet">
+    
+    <!-- IPFS HTTP Client -->
+    <script src="https://cdn.jsdelivr.net/npm/ipfs-http-client/dist/index.min.js"></script>
+    
+    <!-- OrbitDB Client -->
+    <script src="https://cdn.jsdelivr.net/npm/orbit-db/dist/orbitdb.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="index.css">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: "hsl(var(--border))",
+                        input: "hsl(var(--input))",
+                        ring: "hsl(var(--ring))",
+                        background: "hsl(var(--background))",
+                        foreground: "hsl(var(--foreground))",
+                        primary: {
+                            DEFAULT: "hsl(var(--primary))",
+                            foreground: "hsl(var(--primary-foreground))",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(var(--secondary))",
+                            foreground: "hsl(var(--secondary-foreground))",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(var(--muted))",
+                            foreground: "hsl(var(--muted-foreground))",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(var(--accent))",
+                            foreground: "hsl(var(--accent-foreground))",
+                        },
+                        card: {
+                            DEFAULT: "hsl(var(--card))",
+                            foreground: "hsl(var(--card-foreground))",
+                        },
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom fix for heatmap display */
+        #heatmap-container {
+            min-height: 130px;
+            padding-bottom: 10px;
+            overflow-x: auto;
+            overflow-y: visible;
+            display: flex;
+            align-items: flex-start;
+        }
+        #heatmap-container > div {
+            flex-shrink: 0;
+        }
+        
+        /* Loading spinner */
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #fff;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Document item */
+        .document-item {
+            border-left: 3px solid #2b3b80;
+            transition: all 0.2s ease;
+        }
+        
+        .document-item:hover {
+            border-left-color: #4ade80;
+            background-color: rgba(74, 222, 128, 0.05);
+        }
+    </style>
+</head>
+<body class="font-sans bg-background h-screen flex flex-col">
+    <!-- Mode Switcher -->
+    <div class="flex gap-2 mt-2 justify-center">
+      <button id="mapModeBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Map Mode</button>
+      <button id="dashboardModeBtn" class="px-4 py-2 bg-gray-300 text-gray-900 rounded">Dashboard Mode</button>
+    </div>
+    <!-- Header with API Status -->
+    <header class="bg-[#2b3b80] text-white p-2 shadow-md z-10">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-semibold">Hampton Roads Development Tracker</h1>
+            <div class="flex items-center gap-2">
+                <span class="text-sm" id="ipfs-status">IPFS: <span class="status-indicator">Connecting...</span></span>
+                <span class="text-sm" id="orbitdb-status">OrbitDB: <span class="status-indicator">Connecting...</span></span>
+                <button id="refresh-data" class="px-2 py-1 bg-white bg-opacity-10 rounded hover:bg-opacity-20 text-sm">
+                    Refresh Data
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Map container - Takes most height but not all -->
+    <div id="map-wrapper" class="flex-1 relative" style="height: calc(100vh - 310px);">
+        <!-- Dual Mode Containers -->
+        <div id="mapContainer">
+            <div id="map" class="w-full h-full"></div>
+        </div>
+        <div id="dashboardContainer" style="display:none; height:100vh;"></div>
+        <div class="absolute top-4 right-4 z-[1000] bg-white p-3 shadow-md rounded-md">
+            <h3 class="font-medium text-sm mb-2">Document Clusters</h3>
+            <div id="cluster-legend" class="flex flex-col gap-1 text-xs">
+                <div class="flex items-center gap-1">
+                    <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <span>Building Permits</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span>Development Projects</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span>Public Infrastructure</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Document List Panel -->
+    <div id="document-panel" class="bg-white p-4 shadow-md z-10 h-[240px] overflow-y-auto">
+        <div class="container mx-auto">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-semibold">Recent Documents</h2>
+                <div class="flex gap-2">
+                    <select id="document-filter" class="text-sm border rounded px-2 py-1">
+                        <option value="all">All Documents</option>
+                        <option value="permits">Building Permits</option>
+                        <option value="developments">Development Projects</option>
+                        <option value="infrastructure">Public Infrastructure</option>
+                    </select>
+                    <input type="text" id="document-search" placeholder="Search..." class="text-sm border rounded px-2 py-1">
+                </div>
+            </div>
+            <div id="document-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div class="document-item p-3 bg-gray-50 rounded">
+                    <h3 class="font-medium">Loading documents...</h3>
+                    <div class="flex justify-center mt-2">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin=""></script>
+    
+    <!-- Turf.js for advanced geospatial operations -->
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    
+    <!-- Date-fns for date manipulations -->
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.30.0/index.min.js"></script>
+    
+    <!-- OrbitDB Client Connection Script -->
+    <script>
+        // IPFS and OrbitDB client connections
+        let ipfs;
+        let orbitdb;
+        let documentsDB;
+        
+        // Connect to IPFS and OrbitDB
+        async function connectIpfsOrbitDB() {
+            try {
+                // Update status indicators
+                document.querySelector('#ipfs-status .status-indicator').textContent = 'Connecting...';
+                document.querySelector('#orbitdb-status .status-indicator').textContent = 'Waiting...';
+                
+                // Connect to IPFS daemon through HTTP client
+                ipfs = await window.IpfsHttpClient.create('/api/ipfs');
+                document.querySelector('#ipfs-status .status-indicator').textContent = 'Connected';
+                document.querySelector('#ipfs-status .status-indicator').classList.add('text-green-400');
+                
+                // Create OrbitDB instance
+                document.querySelector('#orbitdb-status .status-indicator').textContent = 'Connecting...';
+                orbitdb = await window.OrbitDB.createInstance(ipfs);
+                
+                // Open documents database (read-only)
+                documentsDB = await orbitdb.docstore('/orbitdb/documents', { sync: true });
+                await documentsDB.load();
+                
+                document.querySelector('#orbitdb-status .status-indicator').textContent = 'Connected';
+                document.querySelector('#orbitdb-status .status-indicator').classList.add('text-green-400');
+                
+                // Load documents into UI
+                loadDocuments();
+                
+                // Set up event listener for database updates
+                documentsDB.events.on('replicated', () => {
+                    console.log('Database replicated - updating UI');
+                    loadDocuments();
+                });
+                
+                return true;
+            } catch (error) {
+                console.error('Failed to connect to IPFS or OrbitDB:', error);
+                document.querySelector('#ipfs-status .status-indicator').textContent = 'Error';
+                document.querySelector('#ipfs-status .status-indicator').classList.add('text-red-400');
+                document.querySelector('#orbitdb-status .status-indicator').textContent = 'Error';
+                document.querySelector('#orbitdb-status .status-indicator').classList.add('text-red-400');
+                return false;
+            }
+        }
+        
+        // Load documents from OrbitDB
+        async function loadDocuments() {
+            try {
+                const documentList = document.getElementById('document-list');
+                
+                if (!documentsDB) {
+                    documentList.innerHTML = `
+                        <div class="document-item p-3 bg-gray-50 rounded col-span-full">
+                            <h3 class="font-medium text-red-500">Database not connected</h3>
+                            <p class="text-sm">Please check your connection status.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Get filter and search values
+                const filter = document.getElementById('document-filter').value;
+                const search = document.getElementById('document-search').value.toLowerCase();
+                
+                // Show loading state
+                documentList.innerHTML = `
+                    <div class="document-item p-3 bg-gray-50 rounded">
+                        <h3 class="font-medium">Loading documents...</h3>
+                        <div class="flex justify-center mt-2">
+                            <div class="loading-spinner"></div>
+                        </div>
+                    </div>
+                `;
+                
+                // Get all documents
+                let docs = documentsDB.query((doc) => {
+                    // Apply filter
+                    if (filter !== 'all' && doc.category !== filter) {
+                        return false;
+                    }
+                    
+                    // Apply search
+                    if (search && !doc.title.toLowerCase().includes(search) && 
+                        !doc.description.toLowerCase().includes(search)) {
+                        return false;
+                    }
+                    
+                    return true;
+                });
+                
+                // Sort by date (newest first)
+                docs.sort((a, b) => new Date(b.created) - new Date(a.created));
+                
+                // Limit to 20 documents
+                docs = docs.slice(0, 20);
+                
+                if (docs.length === 0) {
+                    documentList.innerHTML = `
+                        <div class="document-item p-3 bg-gray-50 rounded col-span-full">
+                            <h3 class="font-medium">No documents found</h3>
+                            <p class="text-sm">Try changing your filter or search criteria.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Create document items
+                const docElements = docs.map(doc => {
+                    const date = new Date(doc.created).toLocaleDateString();
+                    
+                    return `
+                        <div class="document-item p-3 bg-gray-50 rounded hover:bg-gray-100">
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-medium">${doc.title}</h3>
+                                <span class="text-xs text-gray-500">${date}</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">${doc.description.substring(0, 100)}${doc.description.length > 100 ? '...' : ''}</p>
+                            <div class="mt-2 flex justify-between items-center">
+                                <span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">${doc.category}</span>
+                                <button class="text-xs text-blue-600 hover:underline view-document" data-cid="${doc.cid}">View Document</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                documentList.innerHTML = docElements.join('');
+                
+                // Add event listeners for view document buttons
+                document.querySelectorAll('.view-document').forEach(button => {
+                    button.addEventListener('click', async () => {
+                        const cid = button.getAttribute('data-cid');
+                        window.open(`/api/ipfs/view/${cid}`, '_blank');
+                    });
+                });
+                
+                // Add document markers to map
+                updateMapMarkers(docs);
+                
+            } catch (error) {
+                console.error('Error loading documents:', error);
+                documentList.innerHTML = `
+                    <div class="document-item p-3 bg-gray-50 rounded col-span-full">
+                        <h3 class="font-medium text-red-500">Error loading documents</h3>
+                        <p class="text-sm">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Update markers on the map
+        function updateMapMarkers(documents) {
+            // Clear existing markers
+            if (window.documentMarkersLayer) {
+                map.removeLayer(window.documentMarkersLayer);
+            }
+            
+            // Create marker layer
+            window.documentMarkersLayer = L.layerGroup();
+            
+            // Add markers for documents with coordinates
+            documents.forEach(doc => {
+                if (doc.coordinates && doc.coordinates.length === 2) {
+                    const marker = L.marker([doc.coordinates[0], doc.coordinates[1]], {
+                        icon: L.divIcon({
+                            className: 'custom-marker',
+                            html: `<div class="marker-pin bg-${getCategoryColor(doc.category)}-500"></div>`,
+                            iconSize: [30, 30],
+                            iconAnchor: [15, 30]
+                        })
+                    });
+                    
+                    marker.bindPopup(`
+                        <div class="popup-content">
+                            <h3>${doc.title}</h3>
+                            <p class="text-sm">${doc.description.substring(0, 150)}${doc.description.length > 150 ? '...' : ''}</p>
+                            <a href="/api/ipfs/view/${doc.cid}" target="_blank" class="text-blue-600 hover:underline text-sm">View Document</a>
+                        </div>
+                    `);
+                    
+                    window.documentMarkersLayer.addLayer(marker);
+                }
+            });
+            
+            // Add marker layer to map
+            window.documentMarkersLayer.addTo(map);
+        }
+        
+        // Get color for category
+        function getCategoryColor(category) {
+            switch(category) {
+                case 'permits': return 'blue';
+                case 'developments': return 'green';
+                case 'infrastructure': return 'red';
+                default: return 'gray';
+            }
+        }
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Connect to IPFS and OrbitDB
+            await connectIpfsOrbitDB();
+            
+            // Add event listeners
+            document.getElementById('refresh-data').addEventListener('click', loadDocuments);
+            document.getElementById('document-filter').addEventListener('change', loadDocuments);
+            document.getElementById('document-search').addEventListener('input', debounce(loadDocuments, 300));
+        });
+        
+        // Debounce function for search input
+        function debounce(func, wait) {
+            let timeout;
+            return function() {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), wait);
+            };
+        }
+    </script>
+    
+    <!-- Map JS -->
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+# Redirect all requests to the index directory
+RewriteEngine On
+RewriteCond %{REQUEST_URI} !^/index/
+RewriteRule ^(.*)$ /index/$1 [L,R=301]
+
+# Serve index.html as the default document
+DirectoryIndex index.html
+
+# Disable directory listing
+Options -Indexes
+
+# Disable server signature
+ServerSignature Off
