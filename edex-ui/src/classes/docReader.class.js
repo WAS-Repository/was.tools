@@ -1,4 +1,78 @@
+import mysql from 'mysql2/promise';
+import config from '../config/database.js';
+
 class DocReader {
+  constructor() {
+    this.pool = mysql.createPool(config);
+  }
+
+  async load(docId) {
+    const [rows] = await this.pool.execute(`
+      SELECT 
+        d.id,const mysql = require('mysql2/promise');
+        const config = require('../../config/database');
+        
+        class DocReader {
+          constructor() {
+            this.pool = mysql.createPool(config);
+          }
+        
+          async getDocument(id) {
+            const [rows] = await this.pool.execute(`
+              SELECT * FROM documents WHERE id = ?
+            `, [id]);
+            return rows[0];
+          }
+        }
+        
+        module.exports = new DocReader(); // CommonJS for cPanel compatibility
+        d.title,
+        d.content,
+        d.type,
+        d.created_at,
+        d.location,
+        GROUP_CONCAT(t.tag) AS tags
+      FROM documents d
+      LEFT JOIN document_tags dt ON d.id = dt.document_id
+      LEFT JOIN tags t ON dt.tag_id = t.id
+      WHERE d.id = ?
+      GROUP BY d.id
+    `, [docId]);
+
+    if (rows.length === 0) {
+      throw new Error('Document not found');
+    }
+
+    return this.formatDocument(rows[0]);
+  }
+
+  async search(query) {
+    const [rows] = await this.pool.execute(`
+      SELECT 
+        id,
+        title,
+        type,
+        created_at,
+        MATCH(title, content) AGAINST(? IN BOOLEAN MODE) AS relevance
+      FROM documents
+      WHERE MATCH(title, content) AGAINST(? IN BOOLEAN MODE)
+      ORDER BY relevance DESC
+      LIMIT 50
+    `, [query, query]);
+
+    return rows;
+  }
+
+  formatDocument(doc) {
+    return {
+      ...doc,
+      tags: doc.tags ? doc.tags.split(',') : [],
+      location: doc.location ? JSON.parse(doc.location) : null
+    };
+  }
+}
+
+export default new DocReader();
     constructor(opts) {
         pdfjsLib.GlobalWorkerOptions.workerSrc = './node_modules/pdfjs-dist/build/pdf.worker.js';
         const modalElementId = "modal_" + opts.modalId;

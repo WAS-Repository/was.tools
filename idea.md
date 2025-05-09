@@ -2,7 +2,7 @@ I have taken inspiration from edex.ui. Instead of a local file explorer, the fil
 Since the website is meant to be a free open source resource, I feel as if the edex.ui repository is the best supportive of the experience intended when using the application, futuristic and user friendly. 
 The edex.ui repository utilizes node.js as well as a simple javascript based front end already. I imagine a multi-pane user interface with the following features. 
 
-Each feature section is highlighted in the color #ff37d9
+Each feature section is highlighted in the color #ff37d9 . There are 12 panes in total. The lettered numbers are a recognition of multiple features contained within of a single pane. 
 Features:
 - 1. Current time 
 - 2. Project Metadata
